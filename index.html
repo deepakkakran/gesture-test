@@ -1,32 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>3D Hand Gesture Particles</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hand Gesture Controlled 3D Particles</title>
+
 <style>
-  body { margin: 0; overflow: hidden; background: black; }
-  video {
-    position: absolute;
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: sans-serif;
+  }
+  #video {
+    position: fixed;
     bottom: 10px;
     right: 10px;
-    width: 140px;
-    opacity: 0.25;
-    z-index: 5;
+    width: 160px;
+    opacity: 0.35;
+    z-index: 10;
+    border-radius: 8px;
+  }
+  #status {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: #0ff;
+    font-size: 14px;
+    z-index: 10;
   }
 </style>
 </head>
-<body>
 
+<body>
+<div id="status">Initializing…</div>
 <video id="video" autoplay playsinline></video>
 
+<!-- THREE.JS -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+
+<!-- MEDIAPIPE -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-/* =====================
-   THREE.JS (OPTIMIZED)
-===================== */
+/* =============================
+   STATUS DEBUG
+============================= */
+const statusEl = document.getElementById("status");
+function status(msg) { statusEl.textContent = msg; }
+
+/* =============================
+   THREE.JS SETUP
+============================= */
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(
@@ -37,15 +64,15 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.z = 120;
 
-const renderer = new THREE.WebGLRenderer({ antialias: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-/* =====================
+/* =============================
    PARTICLES
-===================== */
-const COUNT = window.innerWidth < 768 ? 1500 : 3000;
+============================= */
+const COUNT = window.innerWidth < 768 ? 1200 : 2500;
 const geometry = new THREE.BufferGeometry();
 const positions = new Float32Array(COUNT * 3);
 
@@ -56,39 +83,44 @@ for (let i = 0; i < positions.length; i++) {
 geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
 const material = new THREE.PointsMaterial({
-  size: 1.4,
+  size: 1.5,
   color: 0x00ffff
 });
 
-const points = new THREE.Points(geometry, material);
-scene.add(points);
+const particles = new THREE.Points(geometry, material);
+scene.add(particles);
 
-/* =====================
+/* =============================
    HAND TRACKING
-===================== */
+============================= */
 const video = document.getElementById("video");
 
-let handX = 0, handY = 0;
+let handX = 0;
+let handY = 0;
 let pinch = false;
-let fist = false;
+
+status("Loading hand model…");
 
 const hands = new Hands({
-  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+  locateFile: file =>
+    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 });
 
 hands.setOptions({
   maxNumHands: 1,
-  modelComplexity: 0,
+  modelComplexity: 1,
   minDetectionConfidence: 0.7,
   minTrackingConfidence: 0.7
 });
 
-hands.onResults(res => {
-  if (!res.multiHandLandmarks.length) return;
+hands.onResults(results => {
+  if (!results.multiHandLandmarks.length) return;
 
-  const lm = res.multiHandLandmarks[0];
+  status("Hand detected");
 
-  // Palm movement
+  const lm = results.multiHandLandmarks[0];
+
+  // Palm center
   handX = (lm[9].x - 0.5) * 2;
   handY = (0.5 - lm[9].y) * 2;
 
@@ -96,50 +128,45 @@ hands.onResults(res => {
   const dx = lm[4].x - lm[8].x;
   const dy = lm[4].y - lm[8].y;
   pinch = Math.sqrt(dx*dx + dy*dy) < 0.04;
-
-  // Fist detection (average finger curl)
-  fist =
-    lm[8].y > lm[6].y &&
-    lm[12].y > lm[10].y &&
-    lm[16].y > lm[14].y &&
-    lm[20].y > lm[18].y;
 });
 
-new Camera(video, {
-  onFrame: async () => await hands.send({ image: video }),
-  width: 480,
-  height: 360
-}).start();
+/* =============================
+   CAMERA BOOTSTRAP
+============================= */
+status("Starting camera…");
 
-/* =====================
+const cam = new Camera(video, {
+  onFrame: async () => {
+    await hands.send({ image: video });
+  },
+  width: 640,
+  height: 480
+});
+
+cam.start()
+  .then(() => status("Camera running"))
+  .catch(err => status("Camera error: " + err));
+
+/* =============================
    ANIMATION LOOP
-===================== */
+============================= */
 function animate() {
   requestAnimationFrame(animate);
 
-  points.rotation.x += handY * 0.04;
-  points.rotation.y += handX * 0.04;
+  particles.rotation.x += handY * 0.05;
+  particles.rotation.y += handX * 0.05;
 
   const pos = geometry.attributes.position.array;
 
   for (let i = 0; i < pos.length; i += 3) {
-    if (fist) {
-      pos[i] *= 0.99;
-      pos[i + 1] *= 0.99;
-      pos[i + 2] *= 0.99;
-    } else {
-      pos[i] += handX * 0.15;
-      pos[i + 1] += handY * 0.15;
-    }
+    pos[i] += handX * 0.15;
+    pos[i + 1] += handY * 0.15;
   }
 
-  if (pinch) {
-    camera.position.z -= 1.5;
-  } else {
-    camera.position.z += 0.5;
-  }
+  if (pinch) camera.position.z -= 1.5;
+  else camera.position.z += 0.5;
 
-  camera.position.z = THREE.MathUtils.clamp(camera.position.z, 60, 200);
+  camera.position.z = THREE.MathUtils.clamp(camera.position.z, 70, 180);
 
   geometry.attributes.position.needsUpdate = true;
   renderer.render(scene, camera);
@@ -147,15 +174,14 @@ function animate() {
 
 animate();
 
-/* =====================
+/* =============================
    RESIZE
-===================== */
+============================= */
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 </script>
-
 </body>
 </html>
