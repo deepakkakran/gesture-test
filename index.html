@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Hand Morph • 3D Particles</title>
+    <title>Hand Silhouette • 3D Particles</title>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
@@ -43,41 +43,41 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background: linear-gradient(135deg, #0a0515, #1a0a35, #250f45);
             z-index: 1000;
             transition: opacity 0.6s ease;
         }
         #title {
             color: #fff;
-            font-size: 3rem;
-            margin-bottom: 15px;
+            font-size: 3.2rem;
+            margin-bottom: 10px;
             text-align: center;
-            text-shadow: 0 0 25px rgba(138, 43, 226, 0.9),
-                         0 0 45px rgba(100, 200, 255, 0.7);
+            text-shadow: 0 0 30px rgba(255, 100, 200, 0.9),
+                         0 0 50px rgba(200, 100, 255, 0.8);
             font-weight: 800;
             letter-spacing: 1.5px;
             max-width: 90%;
-            line-height: 1.2;
+            line-height: 1.1;
         }
         #subtitle {
-            color: rgba(255, 255, 255, 0.92);
-            font-size: 1.4rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1.5rem;
             text-align: center;
             max-width: 85%;
             margin: 25px 0 45px;
             line-height: 1.6;
         }
         .start-btn {
-            background: linear-gradient(45deg, #9d50ff, #6e48e0, #4a36c4);
+            background: linear-gradient(45deg, #ff4081, #e040fb, #7c4dff);
             color: white;
             border: none;
-            padding: 22px 75px;
-            font-size: 1.5rem;
-            border-radius: 65px;
+            padding: 24px 80px;
+            font-size: 1.6rem;
+            border-radius: 70px;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 10px 30px rgba(106, 43, 226, 0.6),
-                        0 0 35px rgba(138, 85, 255, 0.4);
+            box-shadow: 0 12px 35px rgba(224, 64, 251, 0.6),
+                        0 0 40px rgba(255, 100, 200, 0.5);
             font-weight: 800;
             letter-spacing: 2.5px;
             text-transform: uppercase;
@@ -85,9 +85,9 @@
             overflow: hidden;
         }
         .start-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 35px rgba(106, 43, 226, 0.8),
-                        0 0 45px rgba(138, 85, 255, 0.6);
+            transform: translateY(-5px);
+            box-shadow: 0 16px 40px rgba(224, 64, 251, 0.8),
+                        0 0 50px rgba(255, 100, 200, 0.7);
         }
         .start-btn:active {
             transform: translateY(1px);
@@ -98,7 +98,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #0a0a1a;
+            background: #05020a;
             display: none;
             justify-content: center;
             align-items: center;
@@ -107,8 +107,8 @@
         }
         .spinner-container {
             position: relative;
-            width: 110px;
-            height: 110px;
+            width: 120px;
+            height: 120px;
         }
         .spinner {
             position: absolute;
@@ -117,50 +117,50 @@
             border-radius: 50%;
         }
         .spinner-1 {
-            border: 4px solid rgba(138, 43, 226, 0.3);
-            border-top: 4px solid #9d50ff;
-            border-bottom: 4px solid #9d50ff;
-            animation: spin 1.4s linear infinite;
+            border: 5px solid rgba(255, 100, 200, 0.3);
+            border-top: 5px solid #ff4081;
+            border-bottom: 5px solid #ff4081;
+            animation: spin 1.3s linear infinite;
         }
         .spinner-2 {
-            border: 4px solid rgba(100, 200, 255, 0.3);
-            border-top: 4px solid #64c8ff;
-            border-bottom: 4px solid #64c8ff;
-            animation: spin 2.1s linear infinite reverse;
-            width: 65%;
-            height: 65%;
-            top: 17.5%;
-            left: 17.5%;
+            border: 5px solid rgba(200, 100, 255, 0.3);
+            border-top: 5px solid #7c4dff;
+            border-bottom: 5px solid #7c4dff;
+            animation: spin 2.0s linear infinite reverse;
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
         }
         #loading-text {
             color: white;
-            font-size: 1.4rem;
-            margin-top: 35px;
+            font-size: 1.5rem;
+            margin-top: 40px;
             text-align: center;
             padding: 0 25px;
             font-weight: 300;
         }
         #hud {
             position: fixed;
-            bottom: 35px;
+            bottom: 40px;
             left: 0;
             right: 0;
             text-align: center;
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 18px;
-            padding: 16px 30px;
-            background: rgba(25, 15, 45, 0.75);
-            border-radius: 50px;
-            backdrop-filter: blur(12px);
+            color: rgba(255, 255, 255, 0.98);
+            font-size: 20px;
+            padding: 18px 35px;
+            background: rgba(15, 5, 30, 0.85);
+            border-radius: 55px;
+            backdrop-filter: blur(15px);
             max-width: 92%;
             margin: 0 auto;
             z-index: 100;
             transform: translateY(60px);
             opacity: 0;
             transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4),
-                        0 0 25px rgba(138, 43, 226, 0.25);
-            border: 1px solid rgba(138, 85, 255, 0.3);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5),
+                        0 0 30px rgba(255, 100, 200, 0.3);
+            border: 1px solid rgba(255, 100, 200, 0.4);
         }
         #hud.visible {
             transform: translateY(0);
@@ -168,18 +168,18 @@
         }
         #fps-counter {
             position: fixed;
-            top: 25px;
-            right: 25px;
-            background: rgba(15, 10, 30, 0.8);
-            color: #7dffcc;
-            padding: 10px 22px;
-            border-radius: 40px;
+            top: 30px;
+            right: 30px;
+            background: rgba(10, 3, 20, 0.85);
+            color: #ff7acc;
+            padding: 12px 25px;
+            border-radius: 45px;
             font-family: 'Courier New', monospace;
-            font-size: 16px;
+            font-size: 17px;
             z-index: 100;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(100, 255, 220, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 122, 204, 0.3);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -195,16 +195,16 @@
             <div class="spinner spinner-1"></div>
             <div class="spinner spinner-2"></div>
         </div>
-        <div id="loading-text">Scanning hand geometry<br><small>Creating particle morph system...</small></div>
+        <div id="loading-text">Scanning hand shape<br><small>Creating particle silhouette...</small></div>
     </div>
     
     <div id="uiContainer">
-        <h1 id="title">Particles Become Your Hand</h1>
-        <p id="subtitle">Watch 20,000 particles flow and morph<br>into your exact hand shape in 3D space</p>
-        <button class="start-btn" id="startButton">Begin Morphing</button>
+        <h1 id="title">Particles Form Your Hand</h1>
+        <p id="subtitle">25,000 particles will flow and create<br>the exact shape of your hand in 3D</p>
+        <button class="start-btn" id="startButton">Create Silhouette</button>
     </div>
     
-    <div id="hud">✨ Show your hand • Particles will form its exact shape • Move to animate</div>
+    <div id="hud">✨ Show your hand • Particles will form its exact shape • Move slowly</div>
     <div id="fps-counter">FPS: --</div>
 
     <script>
@@ -221,11 +221,12 @@
         let clock = new THREE.Clock();
         
         // Hand tracking variables
-        const LANDMARK_COUNT = 21;
-        const PARTICLE_COUNT = 20000;
-        let handLandmarks3D = new Float32Array(LANDMARK_COUNT * 3).fill(0);
+        const PARTICLE_COUNT = 25000;
+        let handShapePoints = []; // 2D points forming hand silhouette
         let handDetected = false;
-        let handMorphStrength = 0; // 0 = free floating, 1 = perfect hand shape
+        let handMorphStrength = 0; // 0 = free, 1 = perfect hand shape
+        let handCenter = { x: 0, y: 0, z: 0 };
+        let handScale = 1.0;
         let lastHandDetectionTime = 0;
         let handLostTimeout = 4000;
         
@@ -234,34 +235,35 @@
         let frameCount = 0;
         let fps = 0;
         
-        // Hand connections for skeleton visualization (not rendered, used for particle distribution)
-        const HAND_CONNECTIONS = [
-            [0,1],[1,2],[2,3],[3,4],          // Thumb
-            [0,5],[5,6],[6,7],[7,8],          // Index
-            [0,9],[9,10],[10,11],[11,12],     // Middle
-            [0,13],[13,14],[14,15],[15,16],   // Ring
-            [0,17],[17,18],[18,19],[19,20]    // Pinky
+        // Hand landmark indices for contour
+        const HAND_CONTOUR_INDICES = [
+            0, 1, 2, 3, 4,          // Thumb
+            8, 7, 6, 5,             // Index finger
+            9, 10, 11, 12,          // Middle finger
+            16, 15, 14, 13,         // Ring finger
+            17, 18, 19, 20,         // Pinky
+            0                         // Back to wrist
         ];
 
         // Initialize Three.js scene
         function initScene() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x080612);
+            scene.background = new THREE.Color(0x05020a);
             
-            // Subtle ambient light
-            const ambientLight = new THREE.AmbientLight(0x151525, 0.7);
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0x100815, 0.8);
             scene.add(ambientLight);
             
-            // Dynamic point light for depth
-            const pointLight = new THREE.PointLight(0x9d50ff, 2.0, 600);
-            pointLight.position.set(150, 100, 200);
+            // Point light for depth
+            const pointLight = new THREE.PointLight(0xff4081, 2.5, 700);
+            pointLight.position.set(180, 120, 250);
             scene.add(pointLight);
             
-            // Camera with optimized FOV for depth perception
-            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 20, 400);
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 450);
             
-            // Mobile-optimized renderer
+            // Renderer
             renderer = new THREE.WebGLRenderer({ 
                 antialias: false,
                 alpha: false,
@@ -270,7 +272,7 @@
             
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-            renderer.setClearColor(0x080612, 1);
+            renderer.setClearColor(0x05020a, 1);
             
             document.body.appendChild(renderer.domElement);
             
@@ -281,42 +283,44 @@
             window.addEventListener('resize', onWindowResize, false);
         }
         
-        // Create GPU-optimized particle system with hand morphing capability
+        // Create particle system
         function createParticles() {
             const positions = new Float32Array(PARTICLE_COUNT * 3);
             const velocities = new Float32Array(PARTICLE_COUNT * 3);
             const colors = new Float32Array(PARTICLE_COUNT * 3);
             const sizes = new Float32Array(PARTICLE_COUNT);
-            const morphTargets = new Float32Array(PARTICLE_COUNT); // Which landmark each particle morphs to
+            const targetPositions = new Float32Array(PARTICLE_COUNT * 3); // Target positions for morphing
             
-            // Initialize particles
+            // Initialize particles in random positions
             for (let i = 0; i < PARTICLE_COUNT; i++) {
                 // Random position in sphere
-                const radius = 220 + Math.random() * 80;
+                const radius = 250 + Math.random() * 100;
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos(2 * Math.random() - 1);
                 
                 positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
                 positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi) * 0.9;
+                positions[i * 3 + 2] = radius * Math.cos(phi) * 0.85;
                 
                 // Random velocity
-                const speed = 0.15 + Math.random() * 0.4;
+                const speed = 0.1 + Math.random() * 0.3;
                 velocities[i * 3] = (Math.random() - 0.5) * speed;
                 velocities[i * 3 + 1] = (Math.random() - 0.5) * speed;
-                velocities[i * 3 + 2] = (Math.random() - 0.5) * speed * 0.3;
+                velocities[i * 3 + 2] = (Math.random() - 0.5) * speed * 0.2;
                 
-                // Color gradient: deep purple to electric blue
+                // Pink to purple gradient
                 const t = i / PARTICLE_COUNT;
-                colors[i * 3] = 0.35 + Math.sin(t * Math.PI * 2) * 0.15; // R
-                colors[i * 3 + 1] = 0.25 + Math.sin(t * Math.PI * 2 + 1) * 0.25; // G
-                colors[i * 3 + 2] = 0.85 + Math.sin(t * Math.PI * 2 + 2) * 0.15; // B
+                colors[i * 3] = 0.95 - t * 0.3; // R: pink to purple
+                colors[i * 3 + 1] = 0.3 + t * 0.2; // G
+                colors[i * 3 + 2] = 0.6 + t * 0.4; // B
                 
-                // Size variation
-                sizes[i] = 1.8 + Math.random() * 2.2;
+                // Size
+                sizes[i] = 1.5 + Math.random() * 2.0;
                 
-                // Assign particle to a random landmark for morphing
-                morphTargets[i] = Math.floor(Math.random() * LANDMARK_COUNT);
+                // Initialize target positions (will be updated when hand detected)
+                targetPositions[i * 3] = positions[i * 3];
+                targetPositions[i * 3 + 1] = positions[i * 3 + 1];
+                targetPositions[i * 3 + 2] = positions[i * 3 + 2];
             }
             
             // Create geometry
@@ -325,133 +329,67 @@
             geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
             geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-            geometry.setAttribute('morphTarget', new THREE.BufferAttribute(morphTargets, 1));
+            geometry.setAttribute('targetPosition', new THREE.BufferAttribute(targetPositions, 3));
             
-            // Create hand landmark uniforms array
-            const landmarkUniforms = {};
-            for (let i = 0; i < LANDMARK_COUNT; i++) {
-                landmarkUniforms[`landmark${i}`] = { value: new THREE.Vector3(0, 0, 0) };
-            }
-            
-            // Shader material with hand morphing capability
+            // Shader material
             const material = new THREE.ShaderMaterial({
                 uniforms: {
                     pointTexture: { value: createParticleTexture() },
                     time: { value: 0 },
                     deltaTime: { value: 0 },
                     handDetected: { value: 0 },
-                    morphStrength: { value: 0 }, // 0-1 morph intensity
-                    handPosition: { value: new THREE.Vector3(0, 0, 0) },
-                    handInteraction: { value: 0.5 }, // 0=fist repel, 1=open attract
-                    screenSize: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-                    ...landmarkUniforms
+                    morphStrength: { value: 0 },
+                    handCenter: { value: new THREE.Vector3(0, 0, 0) },
+                    handScale: { value: 1.0 },
+                    screenSize: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
                 },
                 vertexShader: `
                     uniform float time;
                     uniform float deltaTime;
                     uniform float handDetected;
                     uniform float morphStrength;
-                    uniform vec3 handPosition;
-                    uniform float handInteraction;
+                    uniform vec3 handCenter;
+                    uniform float handScale;
                     uniform vec2 screenSize;
-                    
-                    // Hand landmarks
-                    uniform vec3 landmark0; uniform vec3 landmark1; uniform vec3 landmark2; uniform vec3 landmark3; uniform vec3 landmark4;
-                    uniform vec3 landmark5; uniform vec3 landmark6; uniform vec3 landmark7; uniform vec3 landmark8; uniform vec3 landmark9;
-                    uniform vec3 landmark10; uniform vec3 landmark11; uniform vec3 landmark12; uniform vec3 landmark13; uniform vec3 landmark14;
-                    uniform vec3 landmark15; uniform vec3 landmark16; uniform vec3 landmark17; uniform vec3 landmark18; uniform vec3 landmark19;
-                    uniform vec3 landmark20;
                     
                     attribute vec3 velocity;
                     attribute vec3 color;
                     attribute float size;
-                    attribute float morphTarget;
+                    attribute vec3 targetPosition;
                     
                     varying vec3 vColor;
                     varying float vDistanceToCamera;
-                    
-                    // Get landmark position by index
-                    vec3 getLandmark(float index) {
-                        if (index < 0.5) return landmark0;
-                        else if (index < 1.5) return landmark1;
-                        else if (index < 2.5) return landmark2;
-                        else if (index < 3.5) return landmark3;
-                        else if (index < 4.5) return landmark4;
-                        else if (index < 5.5) return landmark5;
-                        else if (index < 6.5) return landmark6;
-                        else if (index < 7.5) return landmark7;
-                        else if (index < 8.5) return landmark8;
-                        else if (index < 9.5) return landmark9;
-                        else if (index < 10.5) return landmark10;
-                        else if (index < 11.5) return landmark11;
-                        else if (index < 12.5) return landmark12;
-                        else if (index < 13.5) return landmark13;
-                        else if (index < 14.5) return landmark14;
-                        else if (index < 15.5) return landmark15;
-                        else if (index < 16.5) return landmark16;
-                        else if (index < 17.5) return landmark17;
-                        else if (index < 18.5) return landmark18;
-                        else if (index < 19.5) return landmark19;
-                        else return landmark20;
-                    }
                     
                     void main() {
                         vColor = color;
                         vec3 pos = position;
                         
-                        // Natural drift movement
-                        float driftScale = 0.8;
-                        pos.x += sin(time * 0.4 + position.y * 0.1) * driftScale;
-                        pos.y += cos(time * 0.6 + position.z * 0.1) * driftScale;
-                        pos.z += sin(time * 0.3 + position.x * 0.1) * driftScale * 0.6;
+                        // Natural drift
+                        float drift = 0.6;
+                        pos.x += sin(time * 0.35 + position.y * 0.15) * drift;
+                        pos.y += cos(time * 0.55 + position.z * 0.12) * drift;
+                        pos.z += sin(time * 0.25 + position.x * 0.1) * drift * 0.5;
                         
-                        // Hand morphing effect
+                        // Morph to hand shape
                         if (handDetected > 0.5 && morphStrength > 0.01) {
-                            // Get target landmark position for this particle
-                            vec3 targetPos = getLandmark(morphTarget);
+                            // Calculate morph target with smooth interpolation
+                            vec3 morphTarget = mix(pos, targetPosition, morphStrength);
                             
-                            // Calculate attraction force with smooth falloff
-                            vec3 toTarget = targetPos - pos;
-                            float distance = length(toTarget);
+                            // Apply hand center position and scale
+                            morphTarget = (morphTarget * handScale) + handCenter;
                             
-                            // Stronger attraction when closer to target
-                            float attraction = min(15.0, distance * 0.12) * morphStrength;
-                            
-                            // Apply morphing force
-                            pos += normalize(toTarget) * attraction * deltaTime * 60.0;
-                            
-                            // Add subtle orbiting motion around hand skeleton
-                            if (distance > 15.0) {
-                                float orbitStrength = (1.0 - smoothstep(15.0, 100.0, distance)) * 3.0 * morphStrength;
-                                float angle = time * 2.0 + morphTarget * 0.7;
-                                pos.x += sin(angle) * orbitStrength;
-                                pos.y += cos(angle * 1.3) * orbitStrength * 0.7;
-                            }
+                            // Smooth morphing with easing
+                            float morphSpeed = 8.0 + morphStrength * 12.0;
+                            pos = mix(pos, morphTarget, min(1.0, deltaTime * morphSpeed));
                         }
                         
-                        // Hand interaction force field (works during morphing too)
-                        if (handDetected > 0.5) {
-                            vec3 toHand = handPosition - pos;
-                            float distance = length(toHand);
-                            
-                            if (distance < 250.0) {
-                                float falloff = 1.0 - smoothstep(50.0, 250.0, distance);
-                                float direction = mix(-1.2, 1.2, handInteraction); // -1.2 to 1.2
-                                float force = falloff * 9.0 * direction;
-                                
-                                // Turbulence for organic feel
-                                float turbulence = sin(time * 7.0 + distance * 0.2) * 0.5 * falloff;
-                                pos += normalize(toHand) * (force + turbulence) * deltaTime * 60.0;
-                            }
-                        }
-                        
-                        // Boundary constraint - soft spherical boundary
-                        float boundaryRadius = 380.0;
-                        float distanceFromCenter = length(pos);
-                        if (distanceFromCenter > boundaryRadius) {
-                            float overflow = distanceFromCenter - boundaryRadius;
-                            vec3 direction = normalize(pos);
-                            pos -= direction * overflow * 0.8; // Soft bounce
+                        // Boundary constraint
+                        float boundaryRadius = 420.0;
+                        float distFromCenter = length(pos);
+                        if (distFromCenter > boundaryRadius) {
+                            float overflow = distFromCenter - boundaryRadius;
+                            vec3 dir = normalize(pos);
+                            pos -= dir * overflow * 0.9;
                         }
                         
                         // Camera-relative sizing
@@ -460,12 +398,12 @@
                         
                         gl_Position = projectionMatrix * mvPosition;
                         
-                        // Dynamic point size with distance falloff
-                        float baseSize = size * 2.8;
-                        float distanceScale = 180.0 / (vDistanceToCamera + 180.0);
-                        float screenSizeScale = min(screenSize.x, screenSize.y) / 800.0;
-                        gl_PointSize = baseSize * distanceScale * screenSizeScale * (1.0 + morphStrength * 0.5);
-                        gl_PointSize = clamp(gl_PointSize, 1.0, 15.0);
+                        // Dynamic size
+                        float baseSize = size * 3.0;
+                        float distanceScale = 200.0 / (vDistanceToCamera + 200.0);
+                        float screenSizeScale = min(screenSize.x, screenSize.y) / 850.0;
+                        gl_PointSize = baseSize * distanceScale * screenSizeScale * (1.0 + morphStrength * 0.8);
+                        gl_PointSize = clamp(gl_PointSize, 1.0, 18.0);
                     }
                 `,
                 fragmentShader: `
@@ -481,22 +419,21 @@
                         
                         if (dist > 0.5) discard;
                         
-                        // Smooth edge with morph-aware glow
-                        float edge = smoothstep(0.48, 0.5, dist);
-                        float alpha = 1.0 - edge;
+                        // Smooth edge
+                        float alpha = 1.0 - smoothstep(0.48, 0.5, dist);
                         
-                        // Enhanced glow when morphing
-                        float morphGlow = morphStrength * 0.6;
-                        float depthGlow = 0.5 * (1.0 - smoothstep(100.0, 450.0, vDistanceToCamera));
-                        float pulse = 0.25 * sin(vDistanceToCamera * 0.08 + time * 4.0) * (0.5 + morphStrength * 0.5);
+                        // Glow effects
+                        float morphGlow = morphStrength * 0.8;
+                        float depthGlow = 0.6 * (1.0 - smoothstep(120.0, 500.0, vDistanceToCamera));
+                        float pulse = 0.3 * sin(vDistanceToCamera * 0.07 + time * 5.0) * (0.6 + morphStrength * 0.4);
                         
-                        // Color intensifies during morph
-                        vec3 finalColor = vColor * (1.1 + depthGlow + pulse + morphGlow * 1.5);
+                        // Enhanced color during morph
+                        vec3 finalColor = vColor * (1.2 + depthGlow + pulse + morphGlow * 2.0);
                         
-                        // Apply texture with enhanced core when morphing
+                        // Apply texture
                         vec4 texColor = texture2D(pointTexture, gl_PointCoord);
-                        float coreBoost = morphStrength * 0.7 * (1.0 - dist * 1.5);
-                        gl_FragColor = vec4(finalColor, alpha * texColor.a * (0.85 + depthGlow + coreBoost));
+                        float coreBoost = morphStrength * 0.9 * (1.0 - dist * 1.8);
+                        gl_FragColor = vec4(finalColor, alpha * texColor.a * (0.9 + depthGlow + coreBoost));
                     }
                 `,
                 blending: THREE.AdditiveBlending,
@@ -510,40 +447,77 @@
             scene.add(particles);
         }
         
-        // Create high-quality particle texture
+        // Create particle texture
         function createParticleTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 128;
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             
-            // Create multi-layer radial gradient
+            // Radial gradient
             const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(0.15, 'rgba(230, 245, 255, 0.98)');
-            gradient.addColorStop(0.35, 'rgba(180, 220, 255, 0.95)');
-            gradient.addColorStop(0.6, 'rgba(130, 180, 255, 0.85)');
-            gradient.addColorStop(0.8, 'rgba(100, 140, 255, 0.6)');
-            gradient.addColorStop(1, 'rgba(70, 80, 180, 0)');
+            gradient.addColorStop(0.2, 'rgba(255, 220, 240, 0.98)');
+            gradient.addColorStop(0.4, 'rgba(255, 180, 220, 0.95)');
+            gradient.addColorStop(0.65, 'rgba(240, 140, 220, 0.85)');
+            gradient.addColorStop(0.85, 'rgba(220, 100, 200, 0.6)');
+            gradient.addColorStop(1, 'rgba(180, 60, 150, 0)');
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 128, 128);
             
-            // Add subtle noise for organic feel
-            ctx.globalAlpha = 0.08;
-            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-            for (let i = 0; i < 300; i++) {
-                const x = Math.random() * 128;
-                const y = Math.random() * 128;
-                const size = 1 + Math.random() * 2;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
             return texture;
+        }
+        
+        // Generate hand shape points from landmarks (creates filled hand silhouette)
+        function generateHandShape(landmarks) {
+            // Get contour points
+            const contourPoints = HAND_CONTOUR_INDICES.map(idx => ({
+                x: landmarks[idx].x,
+                y: landmarks[idx].y
+            }));
+            
+            // Create filled grid of points inside the hand contour
+            const filledPoints = [];
+            const gridSize = 0.03; // Grid resolution
+            
+            // Find bounding box
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            
+            for (const p of contourPoints) {
+                minX = Math.min(minX, p.x);
+                maxX = Math.max(maxX, p.x);
+                minY = Math.min(minY, p.y);
+                maxY = Math.max(maxY, p.y);
+            }
+            
+            // Create grid and test if points are inside hand contour
+            for (let x = minX; x <= maxX; x += gridSize) {
+                for (let y = minY; y <= maxY; y += gridSize) {
+                    if (isPointInPolygon(x, y, contourPoints)) {
+                        filledPoints.push({ x, y });
+                    }
+                }
+            }
+            
+            return filledPoints;
+        }
+        
+        // Point-in-polygon test (ray casting algorithm)
+        function isPointInPolygon(x, y, polygon) {
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i].x, yi = polygon[i].y;
+                const xj = polygon[j].x, yj = polygon[j].y;
+                
+                const intersect = ((yi > y) !== (yj > y)) && 
+                    (x < (xj - xi) * (y - yi) / (yj - yi + 1e-10) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
         }
         
         // Initialize hand tracking
@@ -563,7 +537,7 @@
             
             hands.onResults(onHandResults);
             
-            // Optimized camera setup
+            // Camera setup
             const cameraUtils = new CameraUtils(videoElement, {
                 onFrame: async () => {
                     try {
@@ -597,14 +571,15 @@
             });
         }
         
-        // Process hand landmarks and convert to 3D scene coordinates
+        // Process hand results and update particle targets
         function onHandResults(results) {
+            const geometry = particles?.geometry;
             const material = particles?.material;
-            if (!material) return;
+            if (!geometry || !material) return;
             
             if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
                 handDetected = false;
-                handMorphStrength = Math.max(0, handMorphStrength - 0.08); // Smooth decay
+                handMorphStrength = Math.max(0, handMorphStrength - 0.1); // Smooth decay
                 material.uniforms.handDetected.value = 0;
                 material.uniforms.morphStrength.value = handMorphStrength;
                 return;
@@ -615,15 +590,15 @@
             hud.classList.add('visible');
             
             // Smooth morph strength increase
-            handMorphStrength = Math.min(1, handMorphStrength + 0.12);
+            handMorphStrength = Math.min(1, handMorphStrength + 0.15);
             material.uniforms.handDetected.value = 1;
             material.uniforms.morphStrength.value = handMorphStrength;
             
             const landmarks = results.multiHandLandmarks[0];
             
-            // Calculate hand center (wrist + knuckles average)
+            // Calculate hand center (average of wrist and finger bases)
             let centerX = 0, centerY = 0, centerZ = 0;
-            const centerIndices = [0, 5, 9, 13, 17]; // Wrist and MCP joints
+            const centerIndices = [0, 1, 2, 5, 9, 13, 17]; // Wrist and finger bases
             for (const idx of centerIndices) {
                 centerX += landmarks[idx].x;
                 centerY += landmarks[idx].y;
@@ -633,34 +608,49 @@
             centerY /= centerIndices.length;
             centerZ /= centerIndices.length;
             
-            // Update hand position for interaction
-            material.uniforms.handPosition.value.set(
-                (centerX - 0.5) * 2 * 260,   // X: -260 to 260
-                -(centerY - 0.5) * 2 * 190,  // Y: inverted, -190 to 190
-                centerZ * 300                 // Z: depth from camera
-            );
+            // Update hand center position in 3D space
+            handCenter.x = (centerX - 0.5) * 2 * 300;   // X: -300 to 300
+            handCenter.y = -(centerY - 0.5) * 2 * 240;  // Y: inverted
+            handCenter.z = centerZ * 350;               // Z: depth
             
-            // Calculate hand openness for interaction
-            const thumbTip = landmarks[4];
-            const indexTip = landmarks[8];
-            const distance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-            material.uniforms.handInteraction.value = Math.min(1, Math.max(0, (distance - 0.08) / 0.1));
+            material.uniforms.handCenter.value.set(handCenter.x, handCenter.y, handCenter.z);
             
-            // Convert all 21 landmarks to 3D scene coordinates
-            for (let i = 0; i < LANDMARK_COUNT; i++) {
-                const lm = landmarks[i];
+            // Calculate hand scale based on size
+            const wrist = landmarks[0];
+            const middleTip = landmarks[12];
+            const handHeight = Math.hypot(wrist.x - middleTip.x, wrist.y - middleTip.y);
+            handScale = Math.min(1.2, Math.max(0.6, handHeight * 8)); // Scale: 0.6 to 1.2
+            material.uniforms.handScale.value = handScale;
+            
+            // Generate hand shape points (filled silhouette)
+            handShapePoints = generateHandShape(landmarks);
+            
+            // Update target positions for particles
+            const targetPositions = geometry.attributes.targetPosition.array;
+            
+            if (handShapePoints.length > 0) {
+                // Map particles to hand shape points
+                const pointsPerParticle = Math.max(1, Math.floor(handShapePoints.length / PARTICLE_COUNT));
                 
-                // Map normalized coordinates to scene space with depth enhancement
-                const x = (lm.x - centerX) * 380;          // Relative to hand center
-                const y = -(lm.y - centerY) * 320;         // Inverted Y
-                const z = (lm.z - centerZ) * 400 + 50;    // Enhanced depth perception
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    // Get corresponding hand shape point (with wrapping)
+                    const pointIndex = (i * pointsPerParticle) % handShapePoints.length;
+                    const hp = handShapePoints[pointIndex];
+                    
+                    // Convert 2D hand coordinates to 3D particle positions
+                    // X and Y from hand shape, Z with some depth variation
+                    const baseZ = (landmarks[0].z - centerZ) * 400; // Base depth from wrist
+                    
+                    targetPositions[i * 3] = (hp.x - centerX) * 450 * handScale;     // X
+                    targetPositions[i * 3 + 1] = -(hp.y - centerY) * 450 * handScale; // Y (inverted)
+                    targetPositions[i * 3 + 2] = baseZ + (Math.sin(i * 0.1) * 30);    // Z with variation
+                }
                 
-                // Apply to shader uniform
-                material.uniforms[`landmark${i}`].value.set(x, y, z);
+                geometry.attributes.targetPosition.needsUpdate = true;
             }
         }
         
-        // Check hand presence for HUD management
+        // Check hand presence
         function checkHandPresence() {
             if (!handDetected && Date.now() - lastHandDetectionTime > handLostTimeout) {
                 hud.classList.remove('visible');
@@ -692,17 +682,17 @@
             material.uniforms.deltaTime.value = delta;
             material.uniforms.screenSize.value.set(window.innerWidth, window.innerHeight);
             
-            // Subtle camera animation for depth perception
-            camera.position.x = Math.sin(time * 0.15) * 25;
-            camera.position.y = Math.cos(time * 0.25) * 18;
-            camera.position.z = 400 + Math.sin(time * 0.08) * 25;
+            // Subtle camera movement
+            camera.position.x = Math.sin(time * 0.12) * 30;
+            camera.position.y = Math.cos(time * 0.2) * 22;
+            camera.position.z = 450 + Math.sin(time * 0.07) * 30;
             camera.lookAt(0, 0, 0);
             
             // Render
             renderer.render(scene, camera);
         }
         
-        // Window resize handler
+        // Window resize
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -710,7 +700,7 @@
             particles.material.uniforms.screenSize.value.set(window.innerWidth, window.innerHeight);
         }
         
-        // Initialize application
+        // Initialize
         function init() {
             initScene();
             initHandTracking();
