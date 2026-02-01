@@ -2,517 +2,269 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hand-Controlled 3D Particles</title>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hand Controlled 3D Particles</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
+            margin: 0;
             overflow: hidden;
-            background: #000;
-            touch-action: none;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #000;
+            font-family: sans-serif;
         }
-        
         canvas {
             display: block;
-            position: fixed;
+        }
+        /* Hide the webcam feed explicitly */
+        #input_video {
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
         }
-        
-        #videoElement {
-            display: none;
-        }
-        
-        #instructions {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 18px;
-            padding: 12px 20px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 30px;
-            max-width: 90%;
-            margin: 0 auto;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            transition: opacity 0.5s ease;
-        }
-        
-        #startButton {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #0c0e1d, #1a1a2e, #16213e);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            cursor: pointer;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        #startButton h1 {
-            color: #fff;
-            font-size: 2.5rem;
-            margin-bottom: 25px;
-            text-shadow: 0 0 15px rgba(100, 200, 255, 0.7);
-            max-width: 90%;
-        }
-        
-        #startButton p {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            max-width: 80%;
-            line-height: 1.5;
-        }
-        
-        .btn {
-            background: linear-gradient(45deg, #6a11cb, #2575fc);
-            color: white;
-            border: none;
-            padding: 18px 60px;
-            font-size: 1.3rem;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(37, 117, 252, 0.4);
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 7px 20px rgba(37, 117, 252, 0.6);
-        }
-        
-        .btn:active {
-            transform: translateY(1px);
-        }
-        
         #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0a0a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 300;
-            flex-direction: column;
-            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ffcc;
+            font-size: 1.2rem;
+            pointer-events: none;
+            text-align: center;
+            animation: pulse 1s infinite;
         }
-        
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(100, 200, 255, 0.3);
-            border-top: 5px solid #64c8ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 25px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        #stats {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: rgba(0, 0, 0, 0.6);
-            color: #4dff91;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-family: monospace;
-            font-size: 14px;
-            z-index: 100;
-            display: none;
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <video id="videoElement" playsinline autoplay muted></video>
-    <div id="instructions">Move your hand to control the particles • Show open palm to attract • Fist to repel</div>
-    <div id="stats">FPS: 0 | Particles: 15000</div>
-    
-    <div id="startButton">
-        <h1>Hand-Controlled 3D Particles</h1>
-        <p>Experience an immersive particle system controlled entirely by your hand movements. No touch required!</p>
-        <button class="btn" id="beginButton">START EXPERIENCE</button>
-    </div>
-    
-    <div id="loading" style="display: none;">
-        <div class="spinner"></div>
-        <div>Loading hand tracking model...</div>
-    </div>
 
+    <div id="loading">Initializing GPU & Camera...<br>Please allow camera access.</div>
+    <video id="input_video" playsinline></video>
+    
     <script>
-        // DOM Elements
-        const startScreen = document.getElementById('startButton');
-        const beginButton = document.getElementById('beginButton');
-        const loadingScreen = document.getElementById('loading');
-        const videoElement = document.getElementById('videoElement');
-        const instructions = document.getElementById('instructions');
-        const statsDisplay = document.getElementById('stats');
+        // --- CONFIGURATION ---
+        const PARTICLE_COUNT = 4000; // Optimized for mobile (keep < 8000 for older phones)
+        const PARTICLE_SIZE = 0.8;
+        const CAM_FOV = 75;
         
-        // Global variables
-        let renderer, scene, camera, particles;
-        let handPosition = { x: 0, y: 0, z: 0 };
-        let handStrength = 0; // 0 = fist (repel), 1 = open palm (attract)
+        // --- GLOBALS ---
+        let scene, camera, renderer, particles, particleGeo;
+        let positions, velocities, originalPositions;
+        let mouse = new THREE.Vector2(9999, 9999); // Start off-screen
+        let target = new THREE.Vector3();
         let isHandDetected = false;
-        let lastFrameTime = 0;
-        let frameCount = 0;
-        let fps = 0;
-        let handsInitialized = false;
-        const PARTICLE_COUNT = 15000; // Optimized count for mobile
         
-        // Initialize Three.js scene
-        function initScene() {
-            // Create scene
+        const videoElement = document.getElementById('input_video');
+        const loadingElement = document.getElementById('loading');
+
+        // --- 1. THREE.JS SETUP (GPU RENDERING) ---
+        function initThree() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000011, 0.0015);
-            
-            // Create camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 300;
-            
-            // Create renderer
-            renderer = new THREE.WebGLRenderer({ 
-                antialias: false,
-                alpha: true
-            });
+            // Add subtle fog for depth
+            scene.fog = new THREE.FogExp2(0x000000, 0.002);
+
+            camera = new THREE.PerspectiveCamera(CAM_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Cap pixel ratio for mobile
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
             document.body.appendChild(renderer.domElement);
-            
-            // Create particles
+
             createParticles();
-            
-            // Handle window resize
             window.addEventListener('resize', onWindowResize, false);
+            animate();
         }
-        
-        // Create optimized particle system
+
         function createParticles() {
-            const positions = new Float32Array(PARTICLE_COUNT * 3);
-            const velocities = new Float32Array(PARTICLE_COUNT * 3);
-            const colors = new Float32Array(PARTICLE_COUNT * 3);
-            const sizes = new Float32Array(PARTICLE_COUNT);
-            
-            // Initialize particles with random positions and velocities
+            particleGeo = new THREE.BufferGeometry();
+            positions = new Float32Array(PARTICLE_COUNT * 3);
+            velocities = new Float32Array(PARTICLE_COUNT * 3);
+            originalPositions = new Float32Array(PARTICLE_COUNT * 3);
+
+            const spread = 80;
+
             for (let i = 0; i < PARTICLE_COUNT; i++) {
-                // Position - distributed in a sphere
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                const radius = 150 + Math.random() * 50;
-                
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi) * 0.5;
-                
-                // Velocity - random direction with controlled speed
-                const speed = 0.3 + Math.random() * 0.7;
-                velocities[i * 3] = (Math.random() - 0.5) * speed;
-                velocities[i * 3 + 1] = (Math.random() - 0.5) * speed;
-                velocities[i * 3 + 2] = (Math.random() - 0.5) * speed;
-                
-                // Color - blue to cyan gradient
-                colors[i * 3] = 0.2 + Math.random() * 0.3; // R
-                colors[i * 3 + 1] = 0.5 + Math.random() * 0.5; // G
-                colors[i * 3 + 2] = 0.9 + Math.random() * 0.1; // B
-                
-                // Size variation
-                sizes[i] = 1.5 + Math.random() * 2.5;
+                const x = (Math.random() - 0.5) * spread;
+                const y = (Math.random() - 0.5) * spread;
+                const z = (Math.random() - 0.5) * spread;
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                originalPositions[i * 3] = x;
+                originalPositions[i * 3 + 1] = y;
+                originalPositions[i * 3 + 2] = z;
+
+                velocities[i * 3] = 0;
+                velocities[i * 3 + 1] = 0;
+                velocities[i * 3 + 2] = 0;
             }
-            
-            // Create geometry
-            const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-            
-            // Create shader material for GPU-accelerated rendering
-            const material = new THREE.ShaderMaterial({
-                uniforms: {
-                    pointTexture: { value: createParticleTexture() },
-                    time: { value: 0 },
-                    handPosition: { value: new THREE.Vector3(0, 0, 0) },
-                    handStrength: { value: 0 },
-                    handDetected: { value: 0 }
-                },
-                vertexShader: `
-                    uniform float time;
-                    uniform vec3 handPosition;
-                    uniform float handStrength; // 0 = repel, 1 = attract
-                    uniform float handDetected;
-                    
-                    attribute vec3 velocity;
-                    attribute vec3 color;
-                    attribute float size;
-                    
-                    varying vec3 vColor;
-                    
-                    void main() {
-                        vColor = color;
-                        
-                        // Current position
-                        vec3 pos = position;
-                        
-                        // Add time-based movement
-                        pos += velocity * time * 2.0;
-                        
-                        // Hand interaction - only if hand is detected
-                        if (handDetected > 0.5) {
-                            vec3 toHand = handPosition - pos;
-                            float distance = length(toHand);
-                            
-                            // Dynamic force based on distance and hand strength
-                            float forceMultiplier = handStrength * 2.0 - 1.0; // -1 to 1
-                            float force = (150.0 / (distance + 10.0)) * forceMultiplier * 0.8;
-                            
-                            // Apply force with direction
-                            pos += normalize(toHand) * force;
-                        }
-                        
-                        // Boundary constraint - keep particles in view
-                        pos = clamp(pos, -300.0, 300.0);
-                        
-                        // Update position
-                        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                        gl_Position = projectionMatrix * mvPosition;
-                        
-                        // Dynamic point size based on distance and base size
-                        float scale = 150.0 / -mvPosition.z;
-                        gl_PointSize = size * scale * (1.0 + handDetected * 0.5);
-                    }
-                `,
-                fragmentShader: `
-                    uniform sampler2D pointTexture;
-                    varying vec3 vColor;
-                    
-                    void main() {
-                        // Textured disc with smooth edges
-                        vec2 uv = gl_PointCoord.xy - 0.5;
-                        float dist = length(uv);
-                        
-                        if (dist > 0.5) discard;
-                        
-                        // Smooth edge falloff
-                        float alpha = 1.0 - smoothstep(0.4, 0.5, dist);
-                        
-                        // Add glow effect
-                        float glow = 0.3 * smoothstep(0.5, 0.1, dist);
-                        
-                        // Final color with glow
-                        vec3 color = vColor * (1.0 + glow * 1.5);
-                        gl_FragColor = vec4(color, alpha * (0.7 + glow));
-                        
-                        // Apply texture
-                        gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
-                    }
-                `,
-                blending: THREE.AdditiveBlending,
-                depthTest: false,
+
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            // Create a custom texture or use a simple point
+            const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
+
+            const material = new THREE.PointsMaterial({
+                color: 0x00aaff,
+                size: PARTICLE_SIZE,
+                map: sprite,
                 transparent: true,
-                vertexColors: true
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
-            
-            // Create particle system
-            particles = new THREE.Points(geometry, material);
+
+            particles = new THREE.Points(particleGeo, material);
             scene.add(particles);
         }
-        
-        // Create a simple particle texture
-        function createParticleTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
-            
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(0.3, 'rgba(200, 230, 255, 0.8)');
-            gradient.addColorStop(0.7, 'rgba(100, 180, 255, 0.6)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 64, 64);
-            
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.needsUpdate = true;
-            return texture;
-        }
-        
-        // Initialize hand tracking
-        function initHandTracking() {
-            loadingScreen.style.display = 'flex';
-            
-            const hands = new Hands({
-                locateFile: (file) => {
-                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-                }
-            });
-            
-            hands.setOptions({
-                maxNumHands: 1,
-                modelComplexity: 0, // Use lightweight model for mobile
-                minDetectionConfidence: 0.6,
-                minTrackingConfidence: 0.5
-            });
-            
-            hands.onResults(onHandResults);
-            
-            // Setup camera with optimized resolution for mobile
-            const cameraUtils = new CameraUtils(videoElement, {
-                onFrame: async () => {
-                    await hands.send({image: videoElement});
-                },
-                width: 480,  // Lower resolution for better mobile performance
-                height: 360,
-                facingMode: "user" // Front camera
-            });
-            
-            // Start camera after user gesture
-            beginButton.addEventListener('click', async () => {
-                try {
-                    await cameraUtils.start();
-                    startScreen.style.display = 'none';
-                    loadingScreen.style.display = 'flex';
-                    
-                    // Hide loading after a short delay to show the spinner
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                        instructions.style.opacity = '1';
-                        statsDisplay.style.display = 'block';
-                    }, 1500);
-                } catch (error) {
-                    console.error("Camera access error:", error);
-                    alert("Unable to access camera. Please ensure you've granted permission and are using a secure context (HTTPS).");
-                    loadingScreen.style.display = 'none';
-                }
-            });
-            
-            handsInitialized = true;
-        }
-        
-        // Process hand tracking results
-        function onHandResults(results) {
-            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+
+        // --- 2. MEDIAPIPE HAND TRACKING SETUP ---
+        function onResults(results) {
+            loadingElement.style.display = 'none';
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                isHandDetected = true;
+                const landmarks = results.multiHandLandmarks[0];
+                
+                // Track the palm center (Landmark 9) or Index Finger (Landmark 8)
+                // Coordinates are normalized [0,1]. We map them to screen space (NDC).
+                // x is inverted because webcam is mirrored.
+                const x = (1 - landmarks[9].x) * 2 - 1; 
+                const y = -(landmarks[9].y * 2 - 1); 
+                
+                // Smooth interpolation for the target vector to reduce jitter
+                target.x += (x * 40 - target.x) * 0.2; 
+                target.y += (y * 40 - target.y) * 0.2;
+                target.z = 0; // Hand stays roughly in the middle plane
+                
+                // Change color on interaction
+                particles.material.color.setHex(0x00ffcc);
+            } else {
                 isHandDetected = false;
-                handStrength = 0;
-                return;
+                particles.material.color.setHex(0x0055ff);
             }
-            
-            isHandDetected = true;
-            const landmarks = results.multiHandLandmarks[0];
-            
-            // Use index finger tip for position (landmark 8)
-            const indexFinger = landmarks[8];
-            // Use wrist as reference point (landmark 0)
-            const wrist = landmarks[0];
-            
-            // Calculate hand position in normalized coordinates (-1 to 1)
-            handPosition.x = (indexFinger.x - 0.5) * 2 * 250; // Scale to scene dimensions
-            handPosition.y = -(indexFinger.y - 0.5) * 2 * 250; // Invert Y for Three.js
-            handPosition.z = (indexFinger.z - wrist.z) * 500; // Use Z depth from wrist
-            
-            // Calculate hand strength (open palm vs fist)
-            // Distance between thumb tip (4) and index finger base (5)
-            const thumbTip = landmarks[4];
-            const indexBase = landmarks[5];
-            const distance = Math.hypot(thumbTip.x - indexBase.x, thumbTip.y - indexBase.y);
-            
-            // Normalize strength (open palm = ~0.15, fist = ~0.05)
-            handStrength = Math.min(1, Math.max(0, (distance - 0.05) / 0.1));
         }
-        
-        // Animation loop
-        function animate(time) {
+
+        const hands = new Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1, // 0 is fastest, 1 is balanced
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onResults);
+
+        const cameraUtils = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({image: videoElement});
+            },
+            width: 640, // Lower resolution for processing speed
+            height: 480
+        });
+
+        cameraUtils.start();
+
+        // --- 3. ANIMATION LOOP (PHYSICS) ---
+        function animate() {
             requestAnimationFrame(animate);
+
+            const posArray = particleGeo.attributes.position.array;
             
-            // Skip rendering if not initialized
-            if (!renderer || !particles) return;
-            
-            // Calculate FPS
-            frameCount++;
-            if (time - lastFrameTime >= 1000) {
-                fps = Math.round((frameCount * 1000) / (time - lastFrameTime));
-                statsDisplay.textContent = `FPS: ${fps} | Particles: ${PARTICLE_COUNT.toLocaleString()}`;
-                lastFrameTime = time;
-                frameCount = 0;
+            // Time factor for swirling
+            const time = Date.now() * 0.001;
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const ix = i * 3;
+                const iy = i * 3 + 1;
+                const iz = i * 3 + 2;
+
+                let px = posArray[ix];
+                let py = posArray[iy];
+                let pz = posArray[iz];
+
+                // Base State: Gentle Sine Wave Floating
+                let tx = originalPositions[ix] + Math.sin(time + originalPositions[iy]) * 2;
+                let ty = originalPositions[iy] + Math.cos(time + originalPositions[ix]) * 2;
+                let tz = originalPositions[iz];
+
+                // Hand Interaction Logic
+                if (isHandDetected) {
+                    // Calculate distance to hand
+                    const dx = target.x - px;
+                    const dy = target.y - py;
+                    const dz = target.z - pz;
+                    const distSq = dx*dx + dy*dy + dz*dz;
+                    const dist = Math.sqrt(distSq);
+
+                    // ATTRACTION Force (swirl towards hand)
+                    if (dist < 40) {
+                        const force = (40 - dist) / 40; 
+                        
+                        // Move towards hand
+                        velocities[ix] += dx * 0.005 * force;
+                        velocities[iy] += dy * 0.005 * force;
+                        velocities[iz] += dz * 0.005 * force;
+
+                        // Add Swirl/Vortex effect
+                        velocities[ix] += -dy * 0.02; 
+                        velocities[iy] += dx * 0.02;
+                    }
+                } 
+
+                // Return to original if no hand or far away
+                const homeDx = tx - px;
+                const homeDy = ty - py;
+                const homeDz = tz - pz;
+
+                velocities[ix] += homeDx * 0.02;
+                velocities[iy] += homeDy * 0.02;
+                velocities[iz] += homeDz * 0.02;
+
+                // Damping (Friction)
+                velocities[ix] *= 0.92;
+                velocities[iy] *= 0.92;
+                velocities[iz] *= 0.92;
+
+                // Update Position
+                posArray[ix] += velocities[ix];
+                posArray[iy] += velocities[iy];
+                posArray[iz] += velocities[iz];
             }
+
+            particleGeo.attributes.position.needsUpdate = true;
             
-            // Update uniforms
-            const material = particles.material;
-            material.uniforms.time.value = time * 0.001;
-            material.uniforms.handPosition.value.set(handPosition.x, handPosition.y, handPosition.z);
-            material.uniforms.handStrength.value = handStrength;
-            material.uniforms.handDetected.value = isHandDetected ? 1.0 : 0.0;
-            
-            // Subtle camera movement for depth effect
-            camera.position.x = Math.sin(time * 0.0003) * 15;
-            camera.position.y = Math.cos(time * 0.0005) * 10;
-            camera.lookAt(0, 0, 0);
-            
-            // Render scene
+            // Slight Scene Rotation
+            scene.rotation.y += 0.002;
+            scene.rotation.x += 0.001;
+
             renderer.render(scene, camera);
         }
-        
-        // Handle window resize
+
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
-        
-        // Initialize everything
-        function init() {
-            // Initialize Three.js scene
-            initScene();
-            
-            // Initialize hand tracking
-            initHandTracking();
-            
-            // Start animation loop
-            animate(0);
-        }
-        
-        // Start the experience after user interaction
-        beginButton.addEventListener('click', () => {
-            if (!handsInitialized) {
-                init();
-            }
-        });
-        
-        // Hide instructions after 8 seconds
-        setTimeout(() => {
-            instructions.style.opacity = '0';
-            instructions.style.transition = 'opacity 1.5s ease';
-        }, 8000);
+
+        // Start Three.js
+        initThree();
     </script>
 </body>
 </html>
