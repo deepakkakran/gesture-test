@@ -3,41 +3,47 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Hand Gesture Controlled 3D Particles</title>
+<title>AR Hand Force Field – GPU Particles</title>
 
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #000;
-    font-family: sans-serif;
-  }
-  #video {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    width: 160px;
-    opacity: 0.35;
-    z-index: 10;
-    border-radius: 8px;
-  }
-  #status {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    color: #0ff;
-    font-size: 14px;
-    z-index: 10;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: black;
+}
+video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: 0;
+}
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+#hud {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  color: #0ff;
+  font-family: monospace;
+  z-index: 2;
+}
 </style>
 </head>
 
 <body>
-<div id="status">Initializing…</div>
-<video id="video" autoplay playsinline></video>
 
-<!-- THREE.JS -->
+<div id="hud">Initializing…</div>
+<video id="video" autoplay playsinline muted></video>
+
+<!-- THREE -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <!-- MEDIAPIPE -->
@@ -46,45 +52,86 @@
 
 <script>
 /* =============================
-   STATUS DEBUG
+   HUD
 ============================= */
-const statusEl = document.getElementById("status");
-function status(msg) { statusEl.textContent = msg; }
+const hud = msg => document.getElementById("hud").textContent = msg;
 
 /* =============================
-   THREE.JS SETUP
+   CAMERA BACKGROUND (AR)
+============================= */
+const video = document.getElementById("video");
+
+/* =============================
+   THREE SETUP
 ============================= */
 const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 1000);
+camera.position.z = 150;
 
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
-camera.position.z = 120;
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-renderer.setSize(window.innerWidth, window.innerHeight);
+const renderer = new THREE.WebGLRenderer({ alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
 /* =============================
-   PARTICLES
+   GPU PARTICLES
 ============================= */
-const COUNT = window.innerWidth < 768 ? 1200 : 2500;
+const COUNT = innerWidth < 768 ? 20000 : 50000;
+
 const geometry = new THREE.BufferGeometry();
 const positions = new Float32Array(COUNT * 3);
+const velocities = new Float32Array(COUNT * 3);
 
-for (let i = 0; i < positions.length; i++) {
-  positions[i] = (Math.random() - 0.5) * 200;
+for (let i = 0; i < COUNT * 3; i += 3) {
+  positions[i]     = (Math.random() - 0.5) * 300;
+  positions[i + 1] = (Math.random() - 0.5) * 300;
+  positions[i + 2] = (Math.random() - 0.5) * 300;
 }
 
 geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+geometry.setAttribute("velocity", new THREE.BufferAttribute(velocities, 3));
 
-const material = new THREE.PointsMaterial({
-  size: 1.5,
-  color: 0x00ffff
+const material = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: false,
+  uniforms: {
+    uTime: { value: 0 },
+    uHand: { value: new THREE.Vector3() },
+    uForce: { value: new THREE.Vector3() }
+  },
+  vertexShader: `
+    attribute vec3 velocity;
+    uniform float uTime;
+    uniform vec3 uHand;
+    uniform vec3 uForce;
+    varying float vDist;
+
+    void main() {
+      vec3 pos = position;
+
+      vec3 dir = pos - uHand;
+      float dist = length(dir) + 0.001;
+      dir = normalize(dir);
+
+      // Force field
+      vec3 force = -dir * 200.0 / dist;
+      force += uForce * 15.0;
+
+      pos += velocity + force * 0.01;
+
+      vDist = dist;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      gl_PointSize = 2.5;
+    }
+  `,
+  fragmentShader: `
+    varying float vDist;
+    void main() {
+      float alpha = smoothstep(200.0, 0.0, vDist);
+      gl_FragColor = vec4(0.0, 1.0, 1.0, alpha);
+    }
+  `
 });
 
 const particles = new THREE.Points(geometry, material);
@@ -93,17 +140,12 @@ scene.add(particles);
 /* =============================
    HAND TRACKING
 ============================= */
-const video = document.getElementById("video");
-
-let handX = 0;
-let handY = 0;
-let pinch = false;
-
-status("Loading hand model…");
+let handPos = new THREE.Vector3();
+let lastHand = new THREE.Vector3();
+let handForce = new THREE.Vector3();
 
 const hands = new Hands({
-  locateFile: file =>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
 });
 
 hands.setOptions({
@@ -113,75 +155,52 @@ hands.setOptions({
   minTrackingConfidence: 0.7
 });
 
-hands.onResults(results => {
-  if (!results.multiHandLandmarks.length) return;
+hands.onResults(res => {
+  if (!res.multiHandLandmarks.length) return;
 
-  status("Hand detected");
+  hud("Hand detected");
 
-  const lm = results.multiHandLandmarks[0];
+  const p = res.multiHandLandmarks[0][9];
+  const x = (p.x - 0.5) * 400;
+  const y = (0.5 - p.y) * 400;
+  const z = -p.z * 400;
 
-  // Palm center
-  handX = (lm[9].x - 0.5) * 2;
-  handY = (0.5 - lm[9].y) * 2;
+  handPos.set(x, y, z);
+  handForce.subVectors(handPos, lastHand);
+  lastHand.copy(handPos);
 
-  // Pinch detection
-  const dx = lm[4].x - lm[8].x;
-  const dy = lm[4].y - lm[8].y;
-  pinch = Math.sqrt(dx*dx + dy*dy) < 0.04;
+  material.uniforms.uHand.value.copy(handPos);
+  material.uniforms.uForce.value.copy(handForce);
 });
 
 /* =============================
-   CAMERA BOOTSTRAP
+   CAMERA START
 ============================= */
-status("Starting camera…");
-
-const cam = new Camera(video, {
-  onFrame: async () => {
-    await hands.send({ image: video });
-  },
+new Camera(video, {
+  onFrame: async () => await hands.send({ image: video }),
   width: 640,
   height: 480
-});
-
-cam.start()
-  .then(() => status("Camera running"))
-  .catch(err => status("Camera error: " + err));
+}).start().then(() => hud("AR + GPU running"));
 
 /* =============================
-   ANIMATION LOOP
+   LOOP
 ============================= */
-function animate() {
-  requestAnimationFrame(animate);
-
-  particles.rotation.x += handY * 0.05;
-  particles.rotation.y += handX * 0.05;
-
-  const pos = geometry.attributes.position.array;
-
-  for (let i = 0; i < pos.length; i += 3) {
-    pos[i] += handX * 0.15;
-    pos[i + 1] += handY * 0.15;
-  }
-
-  if (pinch) camera.position.z -= 1.5;
-  else camera.position.z += 0.5;
-
-  camera.position.z = THREE.MathUtils.clamp(camera.position.z, 70, 180);
-
-  geometry.attributes.position.needsUpdate = true;
+function animate(t) {
+  material.uniforms.uTime.value = t * 0.001;
   renderer.render(scene, camera);
+  requestAnimationFrame(animate);
 }
-
 animate();
 
 /* =============================
    RESIZE
 ============================= */
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 });
 </script>
+
 </body>
 </html>
