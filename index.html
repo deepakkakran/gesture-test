@@ -5,108 +5,104 @@
 <meta name="viewport"
   content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Hand Shape • Particles</title>
+<title>Hand Particles</title>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{overflow:hidden;background:#000;position:fixed;width:100%;height:100%;}
-canvas{position:fixed;top:0;left:0;width:100%;height:100%;}
-#videoElement{display:none;}
-#uiContainer{
-  position:fixed;inset:0;display:flex;flex-direction:column;
-  justify-content:center;align-items:center;
-  background:linear-gradient(135deg,#1a0a2e,#3a0a59);
-  color:#fff;z-index:1000;text-align:center;
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#0a0315;overflow:hidden;
+  position:fixed;width:100%;height:100%;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
 }
-.start-btn{
-  margin-top:30px;padding:18px 60px;font-size:1.3rem;
-  border-radius:50px;border:none;
-  background:linear-gradient(45deg,#ff3e8a,#8a2be2);
+canvas{position:fixed;top:0;left:0;width:100%;height:100%}
+#video{display:none}
+#ui{
+  position:fixed;inset:0;display:flex;
+  align-items:center;justify-content:center;
+  flex-direction:column;color:#fff;
+  background:linear-gradient(135deg,#1a0a2e,#3a0a59);
+  z-index:10;
+}
+button{
+  margin-top:25px;padding:18px 60px;
+  font-size:1.2rem;border-radius:50px;
+  border:none;background:linear-gradient(45deg,#ff3e8a,#8a2be2);
   color:white;font-weight:700;cursor:pointer;
 }
-#loading{
-  position:fixed;inset:0;background:#0a0315;
-  display:none;justify-content:center;align-items:center;
-  flex-direction:column;color:white;z-index:2000;
-}
-.spinner{
-  width:60px;height:60px;border-radius:50%;
-  border:4px solid rgba(255,255,255,.2);
-  border-top:4px solid #ff69b4;
-  animation:spin 1s linear infinite;margin-bottom:20px;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
 #hud{
   position:fixed;bottom:30px;left:50%;
   transform:translateX(-50%);
   background:rgba(20,5,35,.85);
-  padding:14px 30px;border-radius:40px;
-  color:#fff;opacity:0;transition:.5s;
+  padding:14px 28px;border-radius:40px;
+  color:#fff;opacity:0;transition:.4s;
 }
 #hud.visible{opacity:1}
 #debug{
-  position:fixed;top:15px;left:15px;
-  color:#00ff9d;font-family:monospace;
+  position:fixed;top:12px;left:12px;
+  font-family:monospace;color:#00ff9d;
+  font-size:13px;
 }
 </style>
 </head>
 
 <body>
 
-<video id="videoElement" playsinline muted></video>
+<video id="video" playsinline muted></video>
 
-<div id="uiContainer">
+<div id="ui">
   <h1>Particles Form Your Hand</h1>
-  <p style="margin-top:15px;opacity:.9">
-    Show your hand and watch particles form it in 3D
+  <p style="opacity:.9;margin-top:10px">
+    Allow camera access and show your hand
   </p>
-  <button class="start-btn" id="startButton">Start</button>
+  <button id="start">Start</button>
 </div>
 
-<div id="loading">
-  <div class="spinner"></div>
-  <div>Initializing hand tracking…</div>
-</div>
-
-<div id="hud">🖐️ Show your hand</div>
+<div id="hud">🖐 Show your hand</div>
 <div id="debug">HAND: 0</div>
 
 <script>
-const video = document.getElementById('videoElement');
-const startBtn = document.getElementById('startButton');
-const ui = document.getElementById('uiContainer');
-const loading = document.getElementById('loading');
-const hud = document.getElementById('hud');
-const debugEl = document.getElementById('debug');
+/* ---------------- CONFIG ---------------- */
 
-let renderer, scene, camera, particles;
-let hands, cameraStarted=false;
-let handDetected=false, morph=0;
+const PARTICLE_COUNT =
+  window.innerWidth < 600 ? 9000 : 15000;
+
+const HAND_SAMPLE_DENSITY = 8;   // points per landmark
+const SHAPE_UPDATE_EPS = 0.0004; // landmark movement threshold
+
+/* ------------- GLOBAL STATE ------------- */
+
+let scene, camera, renderer, points;
+let hands, videoStarted=false;
+let handVisible=false, morph=0;
+let cachedShape=null, lastLandmarks=null;
 const clock=new THREE.Clock();
-const PARTICLES=15000;
 
-const HAND_CONTOUR=[0,1,2,3,4,8,7,6,5,9,10,11,12,16,15,14,13,17,18,19,20,0];
+/* ---------------- THREE ---------------- */
 
-function initScene(){
+function initThree(){
   scene=new THREE.Scene();
   scene.background=new THREE.Color(0x0a0315);
 
-  camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,1000);
+  camera=new THREE.PerspectiveCamera(
+    65,innerWidth/innerHeight,0.1,1000
+  );
   camera.position.z=380;
 
-  renderer=new THREE.WebGLRenderer({powerPreference:"high-performance"});
+  renderer=new THREE.WebGLRenderer({
+    powerPreference:"high-performance"
+  });
   renderer.setSize(innerWidth,innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
   document.body.appendChild(renderer.domElement);
 
-  const pos=new Float32Array(PARTICLES*3);
-  const tgt=new Float32Array(PARTICLES*3);
-  const col=new Float32Array(PARTICLES*3);
+  const pos=new Float32Array(PARTICLE_COUNT*3);
+  const tgt=new Float32Array(PARTICLE_COUNT*3);
+  const col=new Float32Array(PARTICLE_COUNT*3);
 
-  for(let i=0;i<PARTICLES;i++){
+  for(let i=0;i<PARTICLE_COUNT;i++){
     const r=220+Math.random()*80;
     const t=Math.random()*Math.PI*2;
     const p=Math.acos(2*Math.random()-1);
@@ -118,111 +114,90 @@ function initScene(){
   }
 
   const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  g.setAttribute('target',new THREE.BufferAttribute(tgt,3));
-  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  g.setAttribute("position",new THREE.BufferAttribute(pos,3));
+  g.setAttribute("target",new THREE.BufferAttribute(tgt,3));
+  g.setAttribute("color",new THREE.BufferAttribute(col,3));
 
-  particles=new THREE.Points(g,new THREE.PointsMaterial({
+  points=new THREE.Points(g,new THREE.PointsMaterial({
     size:3.5,vertexColors:true,transparent:true,
     blending:THREE.AdditiveBlending
   }));
-  scene.add(particles);
 
-  addEventListener('resize',()=>{
+  scene.add(points);
+
+  addEventListener("resize",()=>{
     camera.aspect=innerWidth/innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth,innerHeight);
   });
 }
 
-function isInside(x,y,poly){
-  let inside=false;
-  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-    const a=poly[i],b=poly[j];
-    if(((a.y>y)!==(b.y>y)) &&
-      x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)
-      inside=!inside;
-  }
-  return inside;
-}
+/* -------- HAND SHAPE (ACCURATE) -------- */
 
-function generateShape(lm){
-  const poly=HAND_CONTOUR.map(i=>({x:lm[i].x,y:lm[i].y}));
-  let minX=1,maxX=0,minY=1,maxY=0;
-  poly.forEach(p=>{
-    minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);
-    minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);
-  });
+function generateShape(landmarks){
   const pts=[];
-  for(let x=minX;x<=maxX;x+=.04)
-    for(let y=minY;y<=maxY;y+=.04)
-      if(isInside(x,y,poly)) pts.push({x,y});
+  for(let i=0;i<landmarks.length;i++){
+    const p=landmarks[i];
+    const spread=i===0?0.035:0.02;
+    for(let j=0;j<HAND_SAMPLE_DENSITY;j++){
+      const a=Math.random()*Math.PI*2;
+      const r=Math.random()*spread;
+      pts.push({
+        x:p.x+Math.cos(a)*r,
+        y:p.y+Math.sin(a)*r
+      });
+    }
+  }
   return pts;
 }
 
 function updateTargets(shape,cx,cy,scale){
-  const t=particles.geometry.attributes.target.array;
-  for(let i=0;i<PARTICLES;i++){
+  const t=points.geometry.attributes.target.array;
+  for(let i=0;i<PARTICLE_COUNT;i++){
     const p=shape[i%shape.length];
     t[i*3]=(p.x-cx)*400*scale;
     t[i*3+1]=-(p.y-cy)*400*scale;
     t[i*3+2]=Math.sin(i*.3)*25;
   }
-  particles.geometry.attributes.target.needsUpdate=true;
+  points.geometry.attributes.target.needsUpdate=true;
 }
 
-async function initHands(){
-  loading.style.display='flex';
+/* ------------- MEDIAPIPE ------------- */
 
+async function initHands(){
   hands=new Hands({
-    locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+    locateFile:f=>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
   });
 
   hands.setOptions({
     maxNumHands:1,
     modelComplexity:0,
-    minDetectionConfidence:.6,
-    minTrackingConfidence:.5
+    minDetectionConfidence:0.6,
+    minTrackingConfidence:0.5
   });
 
-  hands.onResults(res=>{
-    debugEl.textContent=`HAND: ${res.multiHandLandmarks?.length||0}`;
-    if(!res.multiHandLandmarks){
-      handDetected=false;
-      morph=Math.max(0,morph-.08);
-      return;
-    }
-    handDetected=true;
-    morph=Math.min(1,morph+.12);
-    hud.classList.add('visible');
-
-    const lm=res.multiHandLandmarks[0];
-    const cx=(lm[0].x+lm[9].x)/2;
-    const cy=(lm[0].y+lm[9].y)/2;
-    const size=Math.hypot(lm[0].x-lm[12].x,lm[0].y-lm[12].y);
-    const shape=generateShape(lm);
-    if(shape) updateTargets(shape,cx,cy,size*7);
-  });
+  hands.onResults(onHand);
 
   await hands.initialize();
   startCamera();
 }
 
 async function startCamera(){
-  if(cameraStarted) return;
+  if(videoStarted) return;
+
+  const video=document.getElementById("video");
   const stream=await navigator.mediaDevices.getUserMedia({
     video:{facingMode:"user",width:480,height:360}
   });
+
   video.srcObject=stream;
   await video.play();
+  video.width=video.videoWidth;
+  video.height=video.videoHeight;
 
-  video.onloadedmetadata=()=>{
-    video.width=video.videoWidth;
-    video.height=video.videoHeight;
-  };
-
-  cameraStarted=true;
-  loading.style.display='none';
+  videoStarted=true;
+  document.getElementById("hud").classList.add("visible");
 
   let last=0;
   function loop(t){
@@ -235,27 +210,78 @@ async function startCamera(){
   requestAnimationFrame(loop);
 }
 
+function onHand(res){
+  const dbg=document.getElementById("debug");
+  dbg.textContent=`HAND: ${res.multiHandLandmarks?.length||0}`;
+
+  if(!res.multiHandLandmarks){
+    handVisible=false;
+    morph=Math.max(0,morph-.08);
+    return;
+  }
+
+  handVisible=true;
+  morph=Math.min(1,morph+.12);
+
+  const lm=res.multiHandLandmarks[0];
+
+  let update=false;
+  if(!lastLandmarks) update=true;
+  else{
+    const dx=lm[9].x-lastLandmarks[9].x;
+    const dy=lm[9].y-lastLandmarks[9].y;
+    if(dx*dx+dy*dy>SHAPE_UPDATE_EPS) update=true;
+  }
+
+  if(update){
+    cachedShape=generateShape(lm);
+    lastLandmarks=lm.map(p=>({x:p.x,y:p.y}));
+  }
+
+  const cx=(lm[0].x+lm[9].x)/2;
+  const cy=(lm[0].y+lm[9].y)/2;
+  const size=Math.hypot(
+    lm[0].x-lm[12].x,
+    lm[0].y-lm[12].y
+  );
+
+  if(cachedShape)
+    updateTargets(cachedShape,cx,cy,size*7);
+}
+
+/* ------------- ANIMATION ------------- */
+
 function animate(){
   requestAnimationFrame(animate);
-  const pos=particles.geometry.attributes.position.array;
-  const tgt=particles.geometry.attributes.target.array;
+  const pos=points.geometry.attributes.position.array;
+  const tgt=points.geometry.attributes.target.array;
+
   for(let i=0;i<pos.length;i+=3){
-    if(handDetected){
-      pos[i]+= (tgt[i]-pos[i])*morph*.12;
-      pos[i+1]+= (tgt[i+1]-pos[i+1])*morph*.12;
-      pos[i+2]+= (tgt[i+2]-pos[i+2])*morph*.12;
+    if(handVisible){
+      const dx=tgt[i]-pos[i];
+      const dy=tgt[i+1]-pos[i+1];
+      const dz=tgt[i+2]-pos[i+2];
+      const d=Math.sqrt(dx*dx+dy*dy+dz*dz)+.001;
+      const s=Math.min(.25,d*.02);
+      pos[i]+=dx*s;
+      pos[i+1]+=dy*s;
+      pos[i+2]+=dz*s;
     }
   }
-  particles.geometry.attributes.position.needsUpdate=true;
+
+  points.geometry.attributes.position.needsUpdate=true;
   renderer.render(scene,camera);
 }
 
-startBtn.onclick=()=>{
-  ui.style.display='none';
-  initScene();
+/* ------------- START ------------- */
+
+document.getElementById("start").onclick=()=>{
+  document.getElementById("ui").style.display="none";
+  initThree();
   initHands();
   animate();
 };
 </script>
+
 </body>
 </html>
